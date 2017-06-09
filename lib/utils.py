@@ -69,6 +69,7 @@ def get_university(line):
     words = pseg.cut(line)
     # limit word
     limit_word = ''
+    pre_list = []
     for w in words:
         word = w.word.encode('utf-8')
         if not word.find('大学') == -1:
@@ -83,18 +84,15 @@ def get_university(line):
         elif not word.find('学校') == -1:
             limit_word = word
             break
+        pre_list.append(w)
     if limit_word == '':
         return '', line
     # start word
     university = ''
     ifAppend = False
-    words = pseg.cut(line)
-    for w in words:
+    for w in pre_list:
         word = w.word.encode('utf-8')
-        if word == limit_word:
-            university += limit_word
-            break
-        elif w.flag == 'ns':
+        if w.flag == 'ns':
             ifAppend = True
         if ifAppend:
             university += word
@@ -113,6 +111,7 @@ def get_faculty(line):
     words = pseg.cut(line)
     # limit word
     limit_word = ''
+    pre_list = []
     for w in words:
         word = w.word.encode('utf-8')
         if not word.find('专业') == -1:
@@ -121,17 +120,14 @@ def get_faculty(line):
         elif not word.find('系') == -1:
             limit_word = word
             break
+        pre_list.append(w)
     if limit_word == '':
         return '', line
     # start word
     faculty = ''
     ifAppend = True
-    words = pseg.cut(line)
-    for w in words:
+    for w in pre_list:
         word = w.word.encode('utf-8')
-        if word == limit_word:
-            faculty += limit_word
-            break
         if ifAppend:
             faculty += word
         if w.flag == 'x':
@@ -145,47 +141,47 @@ def get_faculty(line):
     return faculty, new_line
 
 
-def get_bmd(p):
-    bmd = ['b', 'm', 'd']
+def get_degree(p):
+    degree = ['b', 'm', 'd']
     if p['b'] > p['m']:
-        bmd[0] = 'm'
-        bmd[1] = 'b'
-    if p[bmd[1]] > p['d']:
-        bmd[2] = bmd[1]
-        bmd[1] = 'd'
-    if p[bmd[0]] > p[bmd[1]]:
-        temp = bmd[1]
-        bmd[1] = bmd[0]
-        bmd[0] = temp
-    if p[bmd[2]] > p[bmd[1]]:
-        return bmd[2]
+        degree[0] = 'm'
+        degree[1] = 'b'
+    if p[degree[1]] > p['d']:
+        degree[2] = degree[1]
+        degree[1] = 'd'
+    if p[degree[0]] > p[degree[1]]:
+        temp = degree[1]
+        degree[1] = degree[0]
+        degree[0] = temp
+    if p[degree[2]] > p[degree[1]]:
+        return degree[2]
     else:
         return ''
 
 
-def get_uf(line):
+def get_education(line):
     words = pseg.cut(line)
     isUf = False
-    p = {'b': 0, 'm': 0, 'd': 0}
+    weight = {'b': 0, 'm': 0, 'd': 0}
     for w in words:
         word = w.word.encode('utf-8')
         if not word.find('本科') == -1:
-            p['b'] += 1
+            weight['b'] += 1
             isUf = True
         if not word.find('学士') == -1:
-            p['b'] += 1
+            weight['b'] += 1
             isUf = True
         if not word.find('硕士') == -1:
-            p['m'] += 1
+            weight['m'] += 1
             isUf = True
         if not word.find('博士') == -1:
-            p['d'] += 1
+            weight['d'] += 1
             isUf = True
         if not word.find('研究生') == -1:
-            p['m'] += 0.8
+            weight['m'] += 0.8
             isUf = True
         if not word.find('研究生') == -1:
-            p['d'] += 0.4
+            weight['d'] += 0.4
             isUf = True
         if not word.find('学位') == -1:
             isUf = True
@@ -199,12 +195,8 @@ def get_uf(line):
             isUf = True
     if not isUf:
         return ''
-    print p
-    bmd = get_bmd(p)
-    if bmd == '':
+    university, new_line = get_university(line)
+    if university == '':
         return ''
-    u, new_line = get_university(line)
-    if u == '':
-        return ''
-    f, new_line = get_faculty(new_line)
-    return u, f, bmd, new_line
+    faculty, new_line = get_faculty(new_line)
+    return {'university': university, 'faculty': faculty, 'weight': weight}, new_line

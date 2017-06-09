@@ -7,37 +7,69 @@ import sys
 from lib.Items import Items
 import lib.utils as utils
 
-
 OUTPUT_CSV = 'demo.csv'
+DEGREE = {
+    'b': [],
+    'm': [],
+    'd': [],
+}
 
 
-def get_uf(line, items):
-    res = utils.get_uf(line)
-    if res == '':
+def set_education(edu, degree, items):
+    if degree == 'b':
+        items.BU = edu['university']
+        items.BF = edu['university']
+    elif degree == 'm':
+        items.MU = edu['university']
+        items.MF = edu['university']
+    elif degree == 'd':
+        items.DU = edu['university']
+        items.DF = edu['university']
+
+
+def work_on_end(items):
+    """结束时，检查教育经历"""
+    degree = ''
+    if items.BU == '':
+        degree = 'b'
+    if items.MU == '':
+        if not degree == '':
+            return False
+        degree = 'm'
+    if items.DU == '':
+        if not degree == '':
+            return False
+        degree = 'd'
+    max_weight = 0
+    match_edu = None
+    for edu in DEGREE[degree]:
+        if edu['weight'][degree] > max_weight:
+            match_edu = edu
+            max_weight = edu['weight'][degree]
+    if match_edu is not None:
+        set_education(edu, degree, items)
+
+
+def get_edu(line, items):
+    edu, new_line = utils.get_education(line)
+    degree = utils.get_degree(edu['weight'])
+    if degree == '':
+        if edu['weight']['b'] > 0:
+            DEGREE['B'].append(edu)
+        if edu['weight']['m'] > 0:
+            DEGREE['M'].append(edu)
+        if edu['weight']['d'] > 0:
+            DEGREE['D'].append(edu)
         return False
-    u, f, bmd, new_line = res
-    print line
-    print u + '-' + f +  '-' + bmd
-    # [BU] [BF]
-    if bmd == 'b':
-        items.BU = u
-        items.BF = f
-    # [MU] [MF]
-    elif bmd == 'm':
-        items.MU = u
-        items.MF = f
-    # [DU] [DF]
-    elif bmd == 'd':
-        items.DU = u
-        items.DF = f
-    get_uf(new_line, items)
+    set_education(edu, degree, items)
+    get_edu(new_line, items)
 
 
 def work_on_line(line, items):
     """
        读取一行文字，进行命名实体识别
     """
-    get_uf(line, items)
+    get_edu(line, items)
     # [gender]
     if not line.find('男') == -1:
         items.gender = '男'
@@ -90,7 +122,8 @@ def work_on_dir(dir_path):
             total_line += tc
             sucess_line += sc
             total_papar += 1
-    print 'total {0} paper; sucess line: {1}/{2}'.format(total_papar, sucess_line, total_line)
+    print 'total {0} paper; sucess line: {1}/{2}'.format(
+        total_papar, sucess_line, total_line)
 
 
 if __name__ == '__main__':
