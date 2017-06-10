@@ -23,6 +23,7 @@ def get_hometown(line):
         if not w.word.encode('utf-8').find('人') == -1:
             if not word_two == '':
                 hometown = w.word[:-1].encode('utf-8')
+                print 'pre: ' + hometown
                 if not hometown == '':
                     prefixs = pseg.cut(hometown)
                     hometown = ''
@@ -99,6 +100,7 @@ def get_university(line):
         if w.flag == 'x':
             ifAppend = False
             university = ''
+    university += limit_word
     # new line
     new_line = ''
     for w in words:
@@ -125,14 +127,12 @@ def get_faculty(line):
         return '', line
     # start word
     faculty = ''
-    ifAppend = True
     for w in pre_list:
         word = w.word.encode('utf-8')
-        if ifAppend:
-            faculty += word
+        faculty += word
         if w.flag == 'x':
-            ifAppend = False
             faculty = ''
+    faculty += limit_word
     # new line
     new_line = ''
     for w in words:
@@ -194,9 +194,9 @@ def get_education(line):
         if not word.find('学历') == -1:
             isUf = True
     if not isUf:
-        return ''
+        return None, line
     university, new_line = get_university(line)
     if university == '':
-        return ''
+        return None, new_line
     faculty, new_line = get_faculty(new_line)
     return {'university': university, 'faculty': faculty, 'weight': weight}, new_line

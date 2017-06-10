@@ -7,24 +7,26 @@ import sys
 from lib.Items import Items
 import lib.utils as utils
 
-OUTPUT_CSV = 'demo.csv'
+OUTPUT_CSV = 'out.csv'
 DEGREE = {
+    'a': [],
     'b': [],
     'm': [],
     'd': [],
 }
+MAX_DEGREE = 'b'
 
 
 def set_education(edu, degree, items):
     if degree == 'b':
         items.BU = edu['university']
-        items.BF = edu['university']
+        items.BF = edu['faculty']
     elif degree == 'm':
         items.MU = edu['university']
-        items.MF = edu['university']
+        items.MF = edu['faculty']
     elif degree == 'd':
         items.DU = edu['university']
-        items.DF = edu['university']
+        items.DF = edu['faculty']
 
 
 def work_on_end(items):
@@ -34,16 +36,44 @@ def work_on_end(items):
         degree = 'b'
     if items.MU == '':
         if not degree == '':
-            return False
-        degree = 'm'
+            degree = 'a'
+        else:
+            degree = 'm'
     if items.DU == '':
         if not degree == '':
-            return False
-        degree = 'd'
+            degree = 'a'
+        else:
+            degree = 'd'
+    if degree == 'a':
+        if items.BU == '':
+            for edu in DEGREE['a']:
+                if edu['weight']['m'] > 0 or edu['weight']['d'] > 0:
+                    continue
+                items.BU = edu['university']
+                items.BF = edu['faculty']
+        if MAX_DEGREE == 'm':
+            if items.MU == '':
+                DEGREE['a'].reverse()
+                for edu in DEGREE['a']:
+                    if edu['weight']['b'] > 0 or edu['weight']['d'] > 0:
+                        continue
+                    items.BU = edu['university']
+                    items.BF = edu['faculty']
+        elif MAX_DEGREE == 'd':
+            if items.DU == '':
+                DEGREE['a'].reverse()
+                for edu in DEGREE['a']:
+                    if edu['weight']['m'] > 0 or edu['weight']['b'] > 0:
+                        continue
+                    items.BU = edu['university']
+                    items.BF = edu['faculty']
+        return False
+    if degree == '':
+        return True
     max_weight = 0
     match_edu = None
     for edu in DEGREE[degree]:
-        if edu['weight'][degree] > max_weight:
+        if edu['weight'][degree] >= max_weight:
             match_edu = edu
             max_weight = edu['weight'][degree]
     if match_edu is not None:
@@ -52,14 +82,14 @@ def work_on_end(items):
 
 def get_edu(line, items):
     edu, new_line = utils.get_education(line)
+    if edu is None:
+        return False
     degree = utils.get_degree(edu['weight'])
     if degree == '':
-        if edu['weight']['b'] > 0:
-            DEGREE['B'].append(edu)
-        if edu['weight']['m'] > 0:
-            DEGREE['M'].append(edu)
-        if edu['weight']['d'] > 0:
-            DEGREE['D'].append(edu)
+        DEGREE['a'].append(edu)
+        DEGREE['b'].append(edu)
+        DEGREE['m'].append(edu)
+        DEGREE['d'].append(edu)
         return False
     set_education(edu, degree, items)
     get_edu(new_line, items)
@@ -69,6 +99,11 @@ def work_on_line(line, items):
     """
        读取一行文字，进行命名实体识别
     """
+    global MAX_DEGREE
+    if not line.find('硕士') == -1 or not line.find('研究生') == -1:
+        MAX_DEGREE = 'm'
+    if not line.find('博士') == -1:
+        MAX_DEGREE = 'd'
     get_edu(line, items)
     # [gender]
     if not line.find('男') == -1:
@@ -103,6 +138,11 @@ def work_on_papar(paper_path):
         if work_on_line(line, items):
             sucess_count += 1
         total_count += 1
+    work_on_end(items)
+    global MAX_DEGREE
+    MAX_DEGREE = 'b'
+    global DEGREE
+    DEGREE = {'a': [], 'b': [], 'm': [], 'd': []}
     items.save(OUTPUT_CSV)
     return sucess_count, total_count
 
@@ -118,10 +158,14 @@ def work_on_dir(dir_path):
         for f in files:
             if f.find('.txt') == -1:
                 continue
-            sc, tc = work_on_papar(os.path.join(root, f))
-            total_line += tc
-            sucess_line += sc
-            total_papar += 1
+            try:
+                sc, tc = work_on_papar(os.path.join(root, f))
+                total_line += tc
+                sucess_line += sc
+                total_papar += 1
+            except Exception as e:
+                print e
+                print f
     print 'total {0} paper; sucess line: {1}/{2}'.format(
         total_papar, sucess_line, total_line)
 
@@ -129,4 +173,7 @@ def work_on_dir(dir_path):
 if __name__ == '__main__':
     if os.path.exists(OUTPUT_CSV):
         os.system('rm -rf ' + OUTPUT_CSV)
-    work_on_dir(sys.argv[1])
+    data_dir = 'data/test/txt'
+    if len(sys.argv) > 1:
+        data_dir = sys.argv[1]
+    work_on_dir(data_dir)
