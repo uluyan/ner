@@ -106,14 +106,16 @@ def work_on_line(line, items):
         MAX_DEGREE = 'd'
     get_edu(line, items)
     # [gender]
-    if not line.find('男') == -1:
-        items.gender = '男'
-    elif not line.find('女') == -1:
-        items.gender = '女'
+    if items.gender == '':
+        if not line.find('男') == -1:
+            items.gender = '男'
+        elif not line.find('女') == -1:
+            items.gender = '女'
     # [hometown]
-    hometown = utils.get_hometown(line)
-    if not hometown == '':
-        items.hometown = hometown
+    if items.hometown == '':
+        hometown = utils.get_hometown(line)
+        if not hometown == '':
+            items.hometown = hometown
     # [title]
     title = utils.get_title(line)
     if not title == '':
