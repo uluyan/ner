@@ -13,4 +13,3 @@ def rename(walk_dir):
 
 if __name__ == '__main__':
     rename(sys.argv[1])
-

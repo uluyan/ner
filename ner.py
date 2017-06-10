@@ -5,7 +5,11 @@
 import os
 import sys
 from lib.Items import Items
-import lib.utils as utils
+from lib import get_degree
+from lib import get_education
+from lib import get_hometown
+from lib import get_title
+from lib import get_filename
 
 OUTPUT_CSV = 'out.csv'
 DEGREE = {
@@ -30,7 +34,8 @@ def set_education(edu, degree, items):
 
 
 def work_on_end(items):
-    """结束时，检查教育经历"""
+    if items.gender == '':
+        items.gender == '男'
     degree = ''
     if items.BU == '':
         degree = 'b'
@@ -81,10 +86,10 @@ def work_on_end(items):
 
 
 def get_edu(line, items):
-    edu, new_line = utils.get_education(line)
+    edu, new_line = get_education(line)
     if edu is None:
         return False
-    degree = utils.get_degree(edu['weight'])
+    degree = get_degree(edu['weight'])
     if degree == '':
         DEGREE['a'].append(edu)
         DEGREE['b'].append(edu)
@@ -113,11 +118,11 @@ def work_on_line(line, items):
             items.gender = '女'
     # [hometown]
     if items.hometown == '':
-        hometown = utils.get_hometown(line)
+        hometown = get_hometown(line)
         if not hometown == '':
             items.hometown = hometown
     # [title]
-    title = utils.get_title(line)
+    title = get_title(line)
     if not title == '':
         items.title = title
     return True
@@ -129,7 +134,7 @@ def work_on_papar(paper_path):
     """
     items = Items()
     # [name]
-    items.name = utils.get_filename(paper_path)
+    items.name = get_filename(paper_path)
     with open(paper_path, 'r') as f:
         lines = f.readlines()
     total_count = 0
