@@ -42,6 +42,9 @@ def get_university(line):
     for w in words:
         word = w.word.encode('utf-8')
         new_line += word
+    if not university.find('大学') == -1:
+        if university.split('大学')[0] == '':
+            return '', new_line
     return university, new_line
 
 

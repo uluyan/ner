@@ -2,6 +2,28 @@
 import jieba.posseg as pseg
 
 
+def get_hometown_ext(line):
+    words = pseg.cut(line)
+    for w in words:
+        word = w.word.encode('utf-8')
+        if word.find('生于') == -1 and word.find('籍贯'):
+            continue
+        else:
+            break
+    count = 0
+    res = ''
+    for w in words:
+        word = w.word.encode('utf-8')
+        if count == 2:
+            break
+        if w.flag[0] == 'n':
+            res += word
+        else:
+            break
+        count += 1
+    return res
+
+
 def get_hometown(line):
     words = pseg.cut(line)
     word_one = ''
@@ -32,4 +54,6 @@ def get_hometown(line):
                     break
         word_two = word_one
         word_one = w
-    return ''
+    res = get_hometown_ext(line)
+    return res
+

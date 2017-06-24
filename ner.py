@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
    基于规则的命名实体识别
@@ -34,8 +35,6 @@ def set_education(edu, degree, items):
 
 
 def work_on_end(items):
-    if items.gender == '':
-        items.gender == '男'
     degree = ''
     if items.BU == '':
         degree = 'b'
@@ -134,7 +133,8 @@ def work_on_papar(paper_path):
     """
     items = Items()
     # [name]
-    items.name = get_filename(paper_path)
+    items.name = get_filename(paper_path).split('_')[0]
+    items.org = get_filename(paper_path).split('_')[1]
     with open(paper_path, 'r') as f:
         lines = f.readlines()
     total_count = 0
@@ -163,8 +163,8 @@ def work_on_dir(dir_path):
     sucess_line = 0
     for root, dirs, files in os.walk(dir_path):
         for f in files:
-            if f.find('.txt') == -1:
-                continue
+            # if f.find('.txt') == -1:
+            #    continue
             try:
                 sc, tc = work_on_papar(os.path.join(root, f))
                 total_line += tc
